@@ -1,0 +1,23 @@
+<html>
+	<head>
+		<title>Ajax Test</title>
+		<script type="text/javascript" src="../../lib/core/extensions.js"></script>
+		<script type="text/javascript" src="../../lib/core/core.js"></script>
+		<script type="text/javascript" src="../../lib/core/event.js"></script>
+		<script type="text/javascript" src="../../lib/tools/parse.js"></script>
+		<script type="text/javascript" src="../../lib/toolkit/ajax.js"></script>
+	</head>
+	<body>
+		<div id="container" />
+		<script type="text/javascript">
+			function success(response) {
+				document.getElementById('container').innerHTML = response.getText();
+			}
+			var ajax = new Ajax();
+			ajax.setUrl("/biblio/");
+			ajax.setAsync(true);
+			ajax.onSuccess.add(success);
+			/*success*/(ajax.call());
+		</script>
+	</body>
+</html>
