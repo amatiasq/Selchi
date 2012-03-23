@@ -14,26 +14,77 @@
 			}
 			var eyeos = { method: function() { }};
 
+			function wrap(myParent, original) {
+				return function() {
+					var origmyParent = this.myParent;
+					this.myParent = myParent;
+					original.apply(this, arguments);
+					this.myParent = origmyParent;
+				};
+			}
+
+			function Extend(clazz, parent) {
+
+				function myParent() {
+					return parent.prototype;
+				}
+
+				var proto = clazz.prototype;
+				for (var i in proto)
+					if (proto.hasOwnProperty(i))
+						proto[i] = wrap(myParent, proto[i]);
+			}
+
 			var test = new PerformanceTest();
 			test.methods = [
 				{
-					name: "Function Call",
-					pre : function() { function test() { }; },
-					loop: function() { test(); }
+					name: "Direct call",
+					pre : function() {
+						function a() { }
+						var b = {
+							c: function() { a.call(this); }
+						};
+					},
+					loop: function() { b.c(); }
 
 
 				}, {
-					name: "Resolution Global",
-					pre : function() { var eyeos = { method: function() { }}; },
-					loop: function() { eyeos.method; }
+					name: "arguments.callee",
+					pre : function() {
+						function a() { }
+						var b = {
+							base: function(args) { args.callee.base.call(this); },
+							c: function() { this.base(arguments); }
+						}
+						b.c.base = a;
+					},
+					loop: function() { b.c(); }
 
 
 				}, {
-					name: "Property Resolutions",
-					pre : function() { var eyeos = { method: function() { }}; },
-					loop: function() { eyeos.method(); }
-
-
+					name: "arguments.callee.caller",
+					pre : function() {
+						function a() { }
+						var b = {
+							base: function() { arguments.callee.caller.base.call(this); },
+							c: function() { this.base(); }
+						}
+						b.c.base = a;
+					},
+					loop: function() { b.c(); }
+				}, {
+					name: 'Jhon resig',
+					pre: function() {
+						function A() { }
+						A.prototype.a = function() { };
+						function B() { }
+						B.prototype.c = function() {
+							this.myParent().a();
+						};
+						Extend(B, A);
+						var b = new B();
+					},
+					loop: function() { b.c(); }
 				}
 			];
 			test.density = 1000;
@@ -115,13 +166,13 @@ Function.prototype.extendNormal = function(childClass) {
 	return extension;
 };
 
-			function SuperClass() {
+			function myParentClass() {
 				this.pepe1 = "";
 				this.pepe2 = 3;
 				this.pepe6 = 2;
 			}
-			SuperClass.Enum = { 'ASDF': 1, 'FDSA': 2 };
-			SuperClass.prototype.method = function() {
+			myParentClass.Enum = { 'ASDF': 1, 'FDSA': 2 };
+			myParentClass.prototype.method = function() {
 				return "micasa" + this.pepe1;
 			};
 			function Class() {
@@ -130,16 +181,16 @@ Function.prototype.extendNormal = function(childClass) {
 
 			test.methods = [
 				function fullExtensionMethod() {
-					SuperClass.extendAll(Class);
+					myParentClass.extendAll(Class);
 				},
 				function normalExtensionMethod() {
-					SuperClass.extendNormal(Class);
+					myParentClass.extendNormal(Class);
 				},
 				function normalExtensionMethod() {
-					SuperClass.extendNormal(Class);
+					myParentClass.extendNormal(Class);
 				},
 				function fullExtensionMethod() {
-					SuperClass.extendAll(Class);
+					myParentClass.extendAll(Class);
 				},
 			];
 
